@@ -111,9 +111,9 @@
             try {
                 const fileName = `${currentChildName}_${Date.now()}.jpg`;
                 
-                // التعديل هنا: إضافة contentType
+                // هنا غيرنا الاسم لـ PROOFS
                 const { data, error } = await supabaseClient.storage
-                    .from('proofs')
+                    .from('PROOFS') 
                     .upload(fileName, file, {
                         cacheControl: '3600',
                         upsert: false,
@@ -122,7 +122,8 @@
 
                 if (error) throw error;
 
-                const { data: urlData } = supabaseClient.storage.from('proofs').getPublicUrl(fileName);
+                // وهنا كمان غيرنا الاسم لـ PROOFS
+                const { data: urlData } = supabaseClient.storage.from('PROOFS').getPublicUrl(fileName);
 
                 await addDoc(collection(db, "Submissions"), {
                     childName: currentChildName,
