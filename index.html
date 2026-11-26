@@ -21,7 +21,6 @@
         const db = getFirestore(app);
 
         const SUPABASE_URL = "https://wbmqgwvrucytljqfxju.supabase.co";
-        // المفتاح الجديد اللي إنت بعته
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndibXFnd3ZydWN5ZnRpanFmeGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTU2NDM5NzksImV4cCI6MjExMTIxOTk3OX0.7HH41C0y6Vv1W-VNfCoirsNkyRr7FKWbHLxiYnx-VOs";
         
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -112,11 +111,13 @@
             try {
                 const fileName = `${currentChildName}_${Date.now()}.jpg`;
                 
+                // التعديل هنا: إضافة contentType
                 const { data, error } = await supabaseClient.storage
                     .from('proofs')
                     .upload(fileName, file, {
                         cacheControl: '3600',
-                        upsert: false
+                        upsert: false,
+                        contentType: file.type || 'image/jpeg'
                     });
 
                 if (error) throw error;
