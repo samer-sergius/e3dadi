@@ -111,27 +111,37 @@
             try {
                 const fileName = `${currentChildName}_${Date.now()}.jpg`;
                 
-                // هنا غيرنا الاسم لـ PROOFS
-                const { data, error } = await supabaseClient.storage
-                    .from('PROOFS') 
-                    .upload(fileName, file, {
-                        cacheControl: '3600',
-                        upsert: false,
-                        contentType: file.type || 'image/jpeg'
+                // 1. هنرفع الصورة الأول ونتأكد إن مفيش مشكلة
+                let photoURL = "";
+                try {
+                    const { data, error } = await supabaseClient.storage
+                        .from('proofs') // هنا الاسم الصح
+                        .upload(fileName, file, {
+                            cacheControl: '3600',
+                            upsert: false,
+                            contentType: file.type || 'image/jpeg'
+                        });
+
+                    if (error) throw new Error("مشكلة Supabase: " + error.message);
+
+                    const { data: urlData } = supabaseClient.storage.from('proofs').getPublicUrl(fileName);
+                    photoURL = urlData.publicUrl;
+                } catch (supaError) {
+                    throw supaError; // لو Supabase فيه مشكلة هنوقف هنا
+                }
+
+                // 2. لو الصورة اترفعت، هنحفظ في Firebase
+                try {
+                    await addDoc(collection(db, "Submissions"), {
+                        childName: currentChildName,
+                        taskName: selectedTaskName,
+                        photoURL: photoURL,
+                        status: "pending",
+                        timestamp: new Date()
                     });
-
-                if (error) throw error;
-
-                // وهنا كمان غيرنا الاسم لـ PROOFS
-                const { data: urlData } = supabaseClient.storage.from('PROOFS').getPublicUrl(fileName);
-
-                await addDoc(collection(db, "Submissions"), {
-                    childName: currentChildName,
-                    taskName: selectedTaskName,
-                    photoURL: urlData.publicUrl,
-                    status: "pending",
-                    timestamp: new Date()
-                });
+                } catch (fbError) {
+                    throw new Error("الصورة اترفعت بس مشكلة في Firebase: " + fbError.message);
+                }
 
                 alert("عاش! الصورة اترفعت والقائد هيراجعها قريب.");
                 taskModal.style.display = 'none';
@@ -139,6 +149,7 @@
 
             } catch (error) {
                 console.error(error);
+                // هنا هنطبع الخطأ بالظبط عشان نعرف سببه
                 alert("حصل خطأ: " + error.message);
             } finally {
                 submitTaskBtn.innerText = "إرسال للقائد";
